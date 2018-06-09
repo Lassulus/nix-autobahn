@@ -1,0 +1,7 @@
+#!/bin/sh
+
+LIBS_NOT_FOUND="$(ldd $1 | grep 'not found' | sed 's/ .*//;s/\t//')"
+
+for x in $LIBS_NOT_FOUND; do
+  nix-locate --top-level $x | head -1 | sed 's/ .*//'
+done

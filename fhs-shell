@@ -1,0 +1,15 @@
+#!/bin/sh
+PACKAGES="$@"
+SCRIPT=${SCRIPT:-bash}
+
+FHS=$(cat << EOF | bash
+nix-build --no-out-link -E 'with import <nixpkgs> {};
+  buildFHSUserEnv {
+    name = "fhs";
+    multiPkgs = p: with p; [ $PACKAGES ];
+    runScript = "$SCRIPT";
+  }
+'
+EOF
+)
+$FHS/bin/fhs
