@@ -8,4 +8,8 @@ fear not, now there is nix-autobahn which will download necessary dependencies f
 nix-autobahn factorio
 ```
 
+## Dependencies
+- expect
+- find
+
 alpha version release
