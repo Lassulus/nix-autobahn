@@ -1,14 +1,12 @@
 #!/bin/sh
-LIBS_NOT_FOUND="$(ldd $1 | grep 'not found' | sed 's/ .*//;s/\t//')"
-
-
-ctrl_c() {
-    echo "** Trapped CTRL-C"
-    exit
-}
+LIBS_NOT_FOUND="$(ldd $1 | grep 'not found' | sed 's/ .*//;s/\t//' | sort | uniq)"
 
 for x in $LIBS_NOT_FOUND; do
+  candidates=$(nix-locate -w --top-level $x)
 
-    trap ctrl_c INT
-    unbuffer nix-locate --top-level $x | fzf --ansi | sed 's/ .*//'
+  if [ $(echo "$candidates" | wc -l) -gt 1 ]; then
+    echo "$candidates" | fzf --ansi | sed 's/ .*//'
+  else
+    echo "$candidates" | sed 's/ .*//'
+  fi
 done
