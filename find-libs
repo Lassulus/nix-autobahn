@@ -1,7 +1,14 @@
 #!/bin/sh
-
 LIBS_NOT_FOUND="$(ldd $1 | grep 'not found' | sed 's/ .*//;s/\t//')"
 
+
+ctrl_c() {
+    echo "** Trapped CTRL-C"
+    exit
+}
+
 for x in $LIBS_NOT_FOUND; do
-  nix-locate --top-level $x | head -1 | sed 's/ .*//'
+
+    trap ctrl_c INT
+    unbuffer nix-locate --top-level $x | fzf --ansi | sed 's/ .*//'
 done
