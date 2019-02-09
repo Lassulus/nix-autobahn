@@ -12,4 +12,4 @@ nix-build --no-out-link -E 'with import <nixpkgs> {};
 '
 EOF
 )
-$FHS/bin/fhs
+"$FHS/bin/fhs"

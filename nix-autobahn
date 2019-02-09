@@ -1,7 +1,8 @@
 #!/bin/sh
-set -x
-export SCRIPT=$(realpath "$1")
-SCRIPTDIR="$(dirname $0)"
-LIBS=$($SCRIPTDIR/find-libs $SCRIPT)
+export SCRIPT
+SCRIPT=$(realpath "$1")
 
-$SCRIPTDIR/fhs-shell $LIBS
+SCRIPTDIR=$(dirname "$0")
+LIBS=$("$SCRIPTDIR/find-libs" "$SCRIPT")
+
+"$SCRIPTDIR/fhs-shell" "$LIBS"
