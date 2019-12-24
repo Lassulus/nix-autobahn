@@ -41,10 +41,9 @@ $({} '{}')/bin/fhs"#,
         .as_bytes(),
     )?;
 
-    let metadata = file.metadata()?;
-    let mut permissions = metadata.permissions();
+    let mut permissions = file.metadata()?.permissions();
     permissions.set_mode(0o755);
-    fs::set_permissions(&target, permissions)?;
+    file.set_permissions(permissions)?;
 
     Ok(())
 }
