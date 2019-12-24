@@ -1,9 +1,11 @@
 use std::fs::File;
-use std::io::prelude::*;
 use std::io;
+use std::io::prelude::*;
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process::Command;
+use std::sync::mpsc::channel;
+use std::thread;
 
 use clap::{App, Arg};
 use dialoguer::{theme::ColorfulTheme, Select};
@@ -140,25 +142,36 @@ fn main() {
     missing_libs.dedup();
     missing_libs.sort();
 
-    for lib in missing_libs {
-        let candidates = find_candidates(&lib);
-        match candidates.len() {
-            0 => panic!("Found no provide for {}", lib),
-            1 => packages.push(candidates[0].0.clone()),
-            _ if candidates.iter().any(|c| packages.contains(&c.0)) => {}
-            _ => {
-                let selections: Vec<String> = candidates
-                    .iter()
-                    .map(|c| format!("{:32}{}", c.0, c.1))
-                    .collect();
-                let choice = Select::with_theme(&ColorfulTheme::default())
-                    .with_prompt(&format!("Pick provider for {}", lib))
-                    .default(0)
-                    .items(&selections[..])
-                    .interact()
-                    .unwrap();
-                packages.push(candidates[choice].0.clone());
+    let (sender, receiver) = channel();
+    thread::spawn(move || {
+        for lib in missing_libs {
+            let candidates = find_candidates(&lib);
+            sender.send((lib, candidates)).unwrap();
+        }
+    });
+
+    loop {
+        if let Ok((lib, candidates)) = receiver.recv() {
+            match candidates.len() {
+                0 => panic!("Found no provide for {}", lib),
+                1 => packages.push(candidates[0].0.clone()),
+                _ if candidates.iter().any(|c| packages.contains(&c.0)) => {}
+                _ => {
+                    let selections: Vec<String> = candidates
+                        .iter()
+                        .map(|c| format!("{:32}{}", c.0, c.1))
+                        .collect();
+                    let choice = Select::with_theme(&ColorfulTheme::default())
+                        .with_prompt(&format!("Pick provider for {}", lib))
+                        .default(0)
+                        .items(&selections[..])
+                        .interact()
+                        .unwrap();
+                    packages.push(candidates[choice].0.clone());
+                }
             }
+        } else {
+            break;
         }
     }
 
