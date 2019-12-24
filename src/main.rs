@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::fs;
 use std::io;
 use std::io::prelude::*;
 use std::os::unix::fs::PermissionsExt;
@@ -8,6 +8,7 @@ use std::sync::mpsc::channel;
 use std::thread;
 
 use clap::{App, Arg};
+use console::Style;
 use dialoguer::{theme::ColorfulTheme, Select};
 
 const NIX_BUILD_FHS: &'static str = "nix-build --no-out-link -E";
@@ -29,7 +30,7 @@ fn fhs_shell(run: &Path, packages: Vec<String>) -> String {
 }
 
 fn make_shellscript(target: &Path, fhs_script: String) -> io::Result<()> {
-    let mut file = File::create(target)?;
+    let mut file = fs::File::create(target)?;
     file.write_all(
         format!(
             r#"#!/usr/bin/env bash
@@ -39,7 +40,11 @@ $({} '{}')/bin/fhs"#,
         )
         .as_bytes(),
     )?;
-    file.metadata()?.permissions().set_mode(0755);
+
+    let metadata = file.metadata()?;
+    let mut permissions = metadata.permissions();
+    permissions.set_mode(0o755);
+    fs::set_permissions(&target, permissions)?;
 
     Ok(())
 }
@@ -157,12 +162,13 @@ fn main() {
                 1 => packages.push(candidates[0].0.clone()),
                 _ if candidates.iter().any(|c| packages.contains(&c.0)) => {}
                 _ => {
+                    let bold = Style::new().bold().red();
                     let selections: Vec<String> = candidates
                         .iter()
-                        .map(|c| format!("{:32}{}", c.0, c.1))
+                        .map(|c| format!("{} {}", c.0, c.1))
                         .collect();
                     let choice = Select::with_theme(&ColorfulTheme::default())
-                        .with_prompt(&format!("Pick provider for {}", lib))
+                        .with_prompt(&format!("Pick provider for {}", bold.apply_to(lib)))
                         .default(0)
                         .items(&selections[..])
                         .interact()
