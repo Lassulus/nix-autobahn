@@ -3,7 +3,13 @@ name = "nix-autobahn"
 version = "0.1.0"
 authors = ["wucke13 <wucke13@gmail.com>"]
 edition = "2018"
-
+description = """
+A simple tool to get up running with dynamically linked libraries on NixOS in a
+jiffy. It utilizes nix-index to find the apropiate packages for missing shared
+object files (.so libraries) on a given binary. The result is a shell script
+with the means to run the binary without modifying it (no patchelf involved).
+"""
+license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
