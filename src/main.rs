@@ -14,6 +14,19 @@ use dialoguer::{theme::ColorfulTheme, Select};
 const NIX_BUILD_FHS: &'static str = "nix-build --no-out-link -E";
 const LDD_NOT_FOUND: &'static str = " => not found";
 
+/// Writes a shellscript
+fn write_bash_script(target: &Path, script: &String) -> io::Result<()> {
+    let mut file = fs::File::create(target)?;
+    file.write_all(format!("#!/usr/bin/env bash\n\n{}", script).as_bytes())?;
+
+    let mut permissions = file.metadata()?.permissions();
+    permissions.set_mode(0o755);
+    file.set_permissions(permissions)?;
+
+    Ok(())
+}
+
+/// Returns the nix expression needed to build an appropiate FHS
 fn fhs_shell(run: &Path, packages: Vec<String>) -> String {
     format!(
         r#"with import <nixpkgs> {{}};
@@ -29,25 +42,7 @@ fn fhs_shell(run: &Path, packages: Vec<String>) -> String {
     )
 }
 
-fn make_shellscript(target: &Path, fhs_script: String) -> io::Result<()> {
-    let mut file = fs::File::create(target)?;
-    file.write_all(
-        format!(
-            r#"#!/usr/bin/env bash
-
-$({} '{}')/bin/fhs"#,
-            NIX_BUILD_FHS, fhs_script,
-        )
-        .as_bytes(),
-    )?;
-
-    let mut permissions = file.metadata()?.permissions();
-    permissions.set_mode(0o755);
-    file.set_permissions(permissions)?;
-
-    Ok(())
-}
-
+/// uses ldd to find missing shared object files on a given binary
 fn missing_libs(binary: &Path) -> Vec<String> {
     let output = Command::new("ldd")
         .arg(binary.to_str().expect("unable to stringify path"))
@@ -65,7 +60,7 @@ fn missing_libs(binary: &Path) -> Vec<String> {
             Some(i) => {
                 let mut s = l.to_string();
                 s.truncate(i);
-                s.remove(0);
+                s.remove(0); // get rid of tabulator prefix
                 Some(s.trim().to_string())
             }
             None => None,
@@ -73,6 +68,8 @@ fn missing_libs(binary: &Path) -> Vec<String> {
         .collect()
 }
 
+/// uses nix-locate to find candidate packages providing a given file,
+/// identified by a file name
 fn find_candidates(file_name: &String) -> Vec<(String, String)> {
     let output = Command::new("nix-locate")
         .arg("--top-level")
@@ -111,25 +108,30 @@ fn main() {
                 .help("dynamically linked binary to be examined"),
         )
         .arg(
-            Arg::with_name("additional-libs")
+            Arg::with_name("libs")
                 .short("l")
+                .long("additional-libs")
                 .takes_value(true)
                 .multiple(true)
-                .help("Additional libraries to search and add"),
+                .help("Additional libraries to search for and propagate"),
         )
         .arg(
-            Arg::with_name("additional-packages")
+            Arg::with_name("packages")
                 .short("p")
+                .long("additional-pkgs")
                 .takes_value(true)
                 .multiple(true)
-                .help("Additional packages to add"),
+                .help("Additional packages to propagate"),
         )
         .get_matches();
 
+    // the binary to be processed
     let path_to_binary = Path::new(matches.value_of("binary").unwrap());
 
+    // initilizes packages list and adds additional-packages right away, if
+    // provided
     let mut packages: Vec<String> = Vec::new();
-    if let Some(additional_packages) = matches.values_of("additional-packages") {
+    if let Some(additional_packages) = matches.values_of("packages") {
         for p in additional_packages {
             packages.push(p.to_string());
         }
@@ -138,7 +140,7 @@ fn main() {
     packages.sort();
 
     let mut missing_libs = missing_libs(&path_to_binary);
-    if let Some(additional_libs) = matches.values_of("additional-libs") {
+    if let Some(additional_libs) = matches.values_of("libs") {
         for p in additional_libs {
             missing_libs.push(p.to_string());
         }
@@ -146,6 +148,8 @@ fn main() {
     missing_libs.dedup();
     missing_libs.sort();
 
+    // using two thread producer/consumer architecture. This reduces waiting
+    // time by a lot, as nix-locate calls are really time expensive
     let (sender, receiver) = channel();
     thread::spawn(move || {
         for lib in missing_libs {
@@ -180,9 +184,12 @@ fn main() {
         }
     }
 
-    make_shellscript(
+    // build FHS expression
+    let fhs_expression = fhs_shell(&path_to_binary.canonicalize().unwrap(), packages);
+    // write bash script with the FHS expression
+    write_bash_script(
         &path_to_binary.with_file_name("run-with-nix"),
-        fhs_shell(&path_to_binary.canonicalize().unwrap(), packages),
+        &format!("$({} '{}')/bin/fhs", NIX_BUILD_FHS, fhs_expression),
     )
     .unwrap();
 }
