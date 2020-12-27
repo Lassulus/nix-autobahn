@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -x
+export SCRIPT
+SCRIPT=$(realpath "$1")
+export BASESCRIPT=$(basename "$SCRIPT")
+
+SCRIPTDIR=$(dirname "$0")
+
+if ! [ -e ~/.cache/nix-autobahn/"$BASESCRIPT".nix ]; then
+  LIBS=$("$SCRIPTDIR/find-libs" "$SCRIPT")
+  "$SCRIPTDIR/ld-shell" "$LIBS"
+fi
+nix-shell ~/.cache/nix-autobahn/"$BASESCRIPT".nix

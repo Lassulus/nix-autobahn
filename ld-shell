@@ -1,0 +1,18 @@
+#!/bin/sh
+PACKAGES="$@"
+
+mkdir -p ~/.cache/nix-autobahn
+
+cat << EOF > ~/.cache/nix-autobahn/"$BASESCRIPT".nix
+with import <nixpkgs> {};
+  mkShell {
+    name = "ld-shell";
+    QT_PLUGIN_PATH = "\${qt5.qtbase}/\${qt5.qtbase.qtPluginPrefix}";
+    NIX_LD_LIBRARY_PATH = lib.makeLibraryPath [
+      $PACKAGES
+    ];
+    shellHook = ''
+      export NIX_LD="\$(cat $NIX_CC/nix-support/dynamic-linker)"
+    '';
+  }
+EOF

@@ -6,6 +6,7 @@ bash: ./factorio: No such file or directory
 fear not, now there is nix-autobahn which will download necessary dependencies for you.
 ```
 ./nix-autobahn factorio --> Spawns a fhs shell with all needed shared dependencies to execute the binary
+./nix-autobahn-ld factorio -> Spawns you inside a shell with NIX_LD_LIBRARY_PATH set to the needed dependencies
 ./find-libs factorio    --> Lists all libs needed for the binary
 ./fhs-shell             --> Spawns a fhs shell. Arguments are the packages to be available
 ```
@@ -26,4 +27,4 @@ the index has to be build this is done by running `nix-index` and waiting 10-15 
 - find
 - fzf
 - nix-index
-
+- nix-ld (optional) https://github.com/Mic92/nix-ld
