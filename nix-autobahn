@@ -3,6 +3,6 @@ export SCRIPT
 SCRIPT=$(realpath "$1")
 
 SCRIPTDIR=$(dirname "$0")
-LIBS=$("$SCRIPTDIR/find-libs" "$SCRIPT")
+LIBS=$("$SCRIPTDIR/nix-autobahn-find-libs" "$SCRIPT")
 
-"$SCRIPTDIR/fhs-shell" "$LIBS"
+"$SCRIPTDIR/nix-autobahn-fhs-shell" "$LIBS"
