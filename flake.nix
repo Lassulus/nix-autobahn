@@ -1,5 +1,5 @@
 {
-  description = "My haskell application";
+  description = "Shell script collection to download ELF binaries and use them right away!";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";
