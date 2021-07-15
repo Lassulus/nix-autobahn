@@ -7,8 +7,8 @@ fear not, now there is nix-autobahn which will download necessary dependencies f
 ```
 ./nix-autobahn factorio --> Spawns a fhs shell with all needed shared dependencies to execute the binary
 ./nix-autobahn-ld factorio -> Spawns you inside a shell with NIX_LD_LIBRARY_PATH set to the needed dependencies
-./find-libs factorio    --> Lists all libs needed for the binary
-./fhs-shell             --> Spawns a fhs shell. Arguments are the packages to be available
+./nix-autobahn-find-libs factorio    --> Lists all libs needed for the binary
+./nix-autobahn-fhs-shell             --> Spawns a fhs shell. Arguments are the packages to be available
 ```
 
 ## Technical Description
@@ -19,8 +19,8 @@ the index has to be build this is done by running `nix-index` and waiting 10-15 
 
 
 ## Files
-* find-libs --> Prints out all required libraries by that binary
-* fhs-shell --> Spawns a fhsUserEnv nix shell with packages defined as args
+* nix-autobahn-find-libs --> Prints out all required libraries by that binary
+* nix-autobahn-fhs-shell --> Spawns a fhsUserEnv nix shell with packages defined as args
 * nix-autobahn --> Combines the two scripts above to have an instant working nix-shell
 
 ## Dependencies
