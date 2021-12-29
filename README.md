@@ -28,3 +28,6 @@ the index has to be build this is done by running `nix-index` and waiting 10-15 
 - fzf
 - nix-index
 - nix-ld (optional) https://github.com/Mic92/nix-ld
+
+# alternatives
+https://github.com/thiagokokada/nix-alien
