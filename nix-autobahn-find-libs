@@ -1,4 +1,6 @@
 #!/bin/sh
+
+# shellcheck disable=SC2001
 LIBS_NOT_FOUND=$(ldd "$1" | grep 'not found' | sed 's/ .*//;s/\t//' | sort | uniq)
 SELECTED_LIBS=""
 
@@ -26,6 +28,7 @@ for x in $LIBS_NOT_FOUND; do
     SELECTED_LIBS="$SELECTED_LIBS $(echo "$candidates" | fzf --ansi | sed 's/ .*//')"
     # If only one option viable choose it automatically
   else
+    # shellcheck disable=SC2001
     SELECTED_LIBS="$SELECTED_LIBS $(echo "$candidates" | sed 's/ .*//')"
   fi
 done

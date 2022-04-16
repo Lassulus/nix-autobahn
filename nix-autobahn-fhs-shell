@@ -1,5 +1,5 @@
 #!/bin/sh
-PACKAGES="$@"
+PACKAGES="$*"
 SCRIPT=${SCRIPT:-bash}
 
 FHS=$(cat << EOF | bash

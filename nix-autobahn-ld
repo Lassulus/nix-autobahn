@@ -3,7 +3,8 @@
 set -x
 export SCRIPT
 SCRIPT=$(realpath "$1")
-export BASESCRIPT=$(basename "$SCRIPT")
+BASESCRIPT=$(basename "$SCRIPT")
+export BASESCRIPT
 
 SCRIPTDIR=$(dirname "$0")
 
